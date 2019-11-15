@@ -1,62 +1,11 @@
-//TODO: compiler flags
-// also check unity builds more in detail
+#include <string>
+#include "server.h"
 
-struct String {
-    char* data;
-    int unsigned length;
-};
-
-internal inline
-bool operator ==(const String a, const String b){
-    return a.length == b.length &&
-        memcmp(a.data, b.data, a.length);
-}
-
-internal inline
-bool operator ==(const String a, const char* b){
-    return a.length == strlen(b) &&
-        !memcmp(a.data, b, a.length);
-}
-
-
-struct StringIterator { // TODO:?
-    String str;
-    i32 word;
-    i32 line;
-};
-
-//TODO: OR
-
-//getWord(*String str, int number=1);
-//getLine(*String str, int number=1);
-
-//void init(http) {
-//    http.get("/", getFunc);   
-//}
-
-#define getLine(buff) getStringUntilChar(buff, '\n')
-
-internal
-String getStringUntilChar(char* buffer, i32 bufferLength) 
-//TODO: should take string as arg and optional param word order
-// or start idnex
-{
-    String str = {};
-    str.data = buffer;
-    
-    i32 index = 0; 
-    while(index < bufferLength && buffer[index] != '\n')
-        index++;
-    str.length = index;
-    
-    return str;
-}
-
-
-internal
 void handle_request(char* incomingBuffer, i32 incomingBufferLength,
                     char* outgoingBuffer, i32 outgoingBufferLength) 
 {
+    std::string incoming(incomingBuffer, incomingBufferLength);
+    /*
     String request = {};
     request.data = incomingBuffer;
     request.length = incomingBufferLength;
@@ -89,7 +38,7 @@ void handle_request(char* incomingBuffer, i32 incomingBufferLength,
     {
         printf("get request");
     }
-    
+    */
     //spawn a thread, make copy of buffer, handle request, alloc response...
     //strcpy(outgoingBuffer, "HTTP/1.1 200 OK \nDate: Mon, 27 Jul 2009 12:28:53 GMT \nServer: Apache/2.2.14 (Win32) \nLast-Modified: Wed, 22 Jul 2009 19:15:56 GMT \nContent-Length: 88 \nContent-Type: text/html \nConnection: Closed");
     int code = 200;

@@ -2,79 +2,130 @@
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 #include <assert.h>
 #include <errno.h>
+#include <signal.h>
 
-#define internal static
-#define ArrayCount(Array) (sizeof(Array) / sizeof((Array)[0]))
-#define Assert(Expression) if(!(Expression)) {*(volatile int *)0 = 0;}
-#define CTAssert(Expr) static_assert(Expr, "Assertion failed: " #Expr)
+#include "definitions.h"
+#include "server.h"
+
+struct GameState{
+    i32 id;
+    i32 pid; //TODO: this will serve for semaphore as indication whether process can alter this memory probably
+    i32 x[4];
+    i32 y[4];
+};
+
+struct Array{
+    u32 size;
+    u32 capacity; //TODO
+    char data[];
+};
+
+#define arrayAlloc(type, size) arrayAlloc_(sizeof(type), size)
+
+Array* arrayAlloc_(u32 length, u32 size) {
+    Array* result = (Array*) malloc(sizeof(u32) + size*length);
+    result->size = 0;
+    result->capacity = size;
+    return result;
+}
+
+Array* arrayRealloc(Array* array, u32 newLength) {
+    Array* result = (Array*) realloc(array, sizeof(u32) + sizeof(*array)*newLength); 
+    return result; //TODO: test fi suzeof is runtime or compile time (compile time in this case would return shiete
+}
 
 
-typedef float r32;
-typedef double r64;
+global_variable bool isRunning = true;
+void sig_handler(i32 sigNo)
+{
+    if(sigNo == SIGINT) {
+        if (!isRunning) abort();
+        isRunning = false;
+    }
+}
 
-typedef int8_t i8;
-typedef int16_t i16;
-typedef int32_t i32;
-typedef int64_t i64;
-typedef i32 bool32;
-
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-
-#include "server.cpp"
+internal
+i32 strlen(char* buffer) 
+{
+    i32 result = 0;
+    
+    while(buffer[result] != '\0') result++;
+    return result;
+}
 
 int main() {
+    if(signal(SIGINT, sig_handler) == SIG_ERR){
+        printf("cant catch signal ctrl+c");
+    }
+    
+    
+    Array* game_states = arrayAlloc(GameState, 4);
+    
+    i32 test = sizeof(Array);
+    i32 test2 = sizeof(game_states); //TODO: check in debugger
+    
+    ((GameState*) game_states->data)[0] = GameState{
+        .id = 10
+    };
+    ((GameState*) game_states->data)[1] = GameState{
+        .id = 20
+    };
+    ((GameState*) game_states->data)[2] = GameState{
+        .id = 30
+    };
+    
+    printf("%d", game_states->size);
+    printf("%d", ((GameState*) game_states->data)[0].id);
+    
     int serverFd = socket(AF_INET, SOCK_STREAM, 0);
     
     if(!serverFd) {
         printf("error\n");
     }
-
+    
     sockaddr_in addr = {};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(3000);
     
     int opt = 1;
     if(!setsockopt(serverFd, IPPROTO_TCP, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))){
-        printf("error with setsockopt: %s", strerror(errno));
+        printf("error with setsockopt: %d", errno);
     }
-
+    
     if((bind(serverFd, (sockaddr*) &addr, sizeof(addr))))
     {
         printf("%d port unavailable\n", ntohs(addr.sin_port));
         addr.sin_port = htons(3001);
         if((bind(serverFd, (sockaddr*) &addr, sizeof(addr)))){
-            printf("error %s\n", strerror(errno));
+            printf("error %d\n", errno);
             return 0;
         }    
     }
-
+    
     if((listen(serverFd, 69)))
     {
-        printf("error3%s\n", strerror(errno));
+        printf("error3%d\n", errno);
     }
-
+    
     char incomingBuffer[1000] = {}; //TODO: make dynamic buffers and realloc if not long enough
     char outgoingBuffer[1000] = {};
-
-    while(1) {
+    
+    while(isRunning) {
         sockaddr_in clientAddr = {};
         socklen_t clientAddrLen = 0;
         int fd = accept(serverFd, (sockaddr*) &clientAddr, &clientAddrLen);
         assert(clientAddrLen == sizeof(clientAddr));
-
+        
         if(!fd) {
             printf("error4\n");
         }
         else if (fd > 0){
-            if(!read(fd, incomingBuffer, sizeof(incomingBuffer))){
-                printf("error reading data: %s", strerror(errno));
+            if(!read(fd, &incomingBuffer, sizeof(incomingBuffer))){
+                printf("error reading data: %d", errno);
                 close(fd);
                 continue;
             }
@@ -82,14 +133,16 @@ int main() {
             handle_request(incomingBuffer, sizeof(incomingBuffer), outgoingBuffer, sizeof(outgoingBuffer));
             
             if(!send(fd, outgoingBuffer, strlen(outgoingBuffer), 0)){
-                printf("error writing data: %s", strerror(errno));
+                printf("error writing data: %d", errno);
             }
         }
-
+        
         if(close(fd) < 0){
             printf("error closing connection\n");
         }
     }
+    
+    
     
     close(serverFd);
     return 0;
