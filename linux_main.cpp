@@ -13,33 +13,36 @@
 
 struct GameState{
     i32 id;
-    i32 pid; //TODO: this will serve for semaphore as indication whether process can alter this memory probably
+    i32 pid;//TODO: this will serve for semaphore as indication whether process can alter this memory probably
     i32 x[4];
     i32 y[4];
 };
 
 struct Array{
     u32 size;
-    u32 capacity; //TODO
+    u32 capacity; 
     char data[];
 };
 
 #define arrayAlloc(type, size) arrayAlloc_(sizeof(type), size)
 
 Array* arrayAlloc_(u32 length, u32 size) {
-    Array* result = (Array*) malloc(sizeof(u32) + size*length);
+    Array* result = (Array*) malloc(sizeof(u32) * 2 + size*length);
     result->size = 0;
     result->capacity = size;
     return result;
 }
 
-Array* arrayRealloc(Array* array, u32 newLength) {
-    Array* result = (Array*) realloc(array, sizeof(u32) + sizeof(*array)*newLength); 
-    return result; //TODO: test fi suzeof is runtime or compile time (compile time in this case would return shiete
+#define arrayRealloc(array, type, size) arrayRealloc_(array, sizeof(type), size) 
+
+Array* arrayRealloc_(Array* array, u32 size, u32 newLength) {
+    Array* result = (Array*) realloc(array, sizeof(u32) * 2 + size*newLength); 
+    result->capacity = newLength;
+    return result;
 }
 
-
 global_variable bool isRunning = true;
+#if DEBUG_BUILD
 void sig_handler(i32 sigNo)
 {
     if(sigNo == SIGINT) {
@@ -47,6 +50,7 @@ void sig_handler(i32 sigNo)
         isRunning = false;
     }
 }
+#endif
 
 internal
 i32 strlen(char* buffer) 
@@ -58,17 +62,16 @@ i32 strlen(char* buffer)
 }
 
 int main() {
+#if DEBUG_BUILD
     if(signal(SIGINT, sig_handler) == SIG_ERR){
         printf("cant catch signal ctrl+c");
     }
-    
+#endif
     
     Array* game_states = arrayAlloc(GameState, 4);
+    game_states = arrayRealloc(game_states, GameState, 5);
     
-    i32 test = sizeof(Array);
-    i32 test2 = sizeof(game_states); //TODO: check in debugger
-    
-    ((GameState*) game_states->data)[0] = GameState{
+    ((GameState*) game_states->data)[4] = GameState{
         .id = 10
     };
     ((GameState*) game_states->data)[1] = GameState{
