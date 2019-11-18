@@ -11,20 +11,13 @@
 #include "definitions.h"
 #include "server.h"
 
-struct GameState{
-    i32 id;
-    i32 pid;//TODO: this will serve for semaphore as indication whether process can alter this memory probably
-    i32 x[4];
-    i32 y[4];
-};
-
 struct Array{
     u32 size;
     u32 capacity; 
     char data[];
 };
 
-#define arrayAlloc(type, size) arrayAlloc_(sizeof(type), size)
+#define array_alloc(type, size) arrayAlloc_(sizeof(type), size)
 
 Array* arrayAlloc_(u32 length, u32 size) {
     Array* result = (Array*) malloc(sizeof(u32) * 2 + size*length);
@@ -33,7 +26,7 @@ Array* arrayAlloc_(u32 length, u32 size) {
     return result;
 }
 
-#define arrayRealloc(array, type, size) arrayRealloc_(array, sizeof(type), size) 
+#define array_realloc(array, type, size) arrayRealloc_(array, sizeof(type), size) 
 
 Array* arrayRealloc_(Array* array, u32 size, u32 newLength) {
     Array* result = (Array*) realloc(array, sizeof(u32) * 2 + size*newLength); 
@@ -68,22 +61,6 @@ int main() {
     }
 #endif
     
-    Array* game_states = arrayAlloc(GameState, 4);
-    game_states = arrayRealloc(game_states, GameState, 5);
-    
-    ((GameState*) game_states->data)[4] = GameState{
-        .id = 10
-    };
-    ((GameState*) game_states->data)[1] = GameState{
-        .id = 20
-    };
-    ((GameState*) game_states->data)[2] = GameState{
-        .id = 30
-    };
-    
-    printf("%d", game_states->size);
-    printf("%d", ((GameState*) game_states->data)[0].id);
-    
     int serverFd = socket(AF_INET, SOCK_STREAM, 0);
     
     if(!serverFd) {
@@ -114,38 +91,34 @@ int main() {
         printf("error3%d\n", errno);
     }
     
-    char incomingBuffer[1000] = {}; //TODO: make dynamic buffers and realloc if not long enough
-    char outgoingBuffer[1000] = {};
-    
     while(isRunning) {
         sockaddr_in clientAddr = {};
         socklen_t clientAddrLen = 0;
-        int fd = accept(serverFd, (sockaddr*) &clientAddr, &clientAddrLen);
+        i32 fd = accept(serverFd, (sockaddr*) &clientAddr, &clientAddrLen);
         assert(clientAddrLen == sizeof(clientAddr));
         
         if(!fd) {
             printf("error4\n");
         }
         else if (fd > 0){
-            if(!read(fd, &incomingBuffer, sizeof(incomingBuffer))){
+            char* incomingBuffer = (char*) malloc(2000);
+            i32 incomingBufferLength = 1000;
+            char* outgoingBuffer = &incomingBuffer[1000];
+            i32 outgoingBufferLength = 1000;
+            
+            if(!read(fd, incomingBuffer, incomingBufferLength)){
                 printf("error reading data: %d", errno);
                 close(fd);
                 continue;
             }
             
-            handle_request(incomingBuffer, sizeof(incomingBuffer), outgoingBuffer, sizeof(outgoingBuffer));
+            //TODO: create new thread for handle_request 
+            //pass buffers to handle_request but it must clean after itself
             
-            if(!send(fd, outgoingBuffer, strlen(outgoingBuffer), 0)){
-                printf("error writing data: %d", errno);
-            }
-        }
-        
-        if(close(fd) < 0){
-            printf("error closing connection\n");
+            handle_request(fd, incomingBuffer, incomingBufferLength, outgoingBuffer, outgoingBufferLength);
+            //TODO: move all stuff after this to the handle_request
         }
     }
-    
-    
     
     close(serverFd);
     return 0;
