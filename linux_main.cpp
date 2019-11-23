@@ -61,6 +61,7 @@ int main() {
     }
 #endif
     
+    printf("server initialization!!\n");
     int serverFd = socket(AF_INET, SOCK_STREAM, 0);
     
     if(!serverFd) {
