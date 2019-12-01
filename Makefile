@@ -1,9 +1,22 @@
+BUILD_DIR=build
+COMMON_FLAGS=-std=c++11 -Wall -o build/server
+DEBUG_FLAGS=-O0 -ggdb -fsanitize=address -fno-omit-frame-pointer -DDEBUG_BUILD=1
+RELEASE_FLAGS=-Werror -O3
+DEPS=server/server.h
+UNITS=server/linux_main.cpp server/server.cpp
+
+.DEFAULT_GOAL := all
+
 clean:
 	rm build/*
 
-debug: server.h
-	clang++ -std=c++11 -Wall -O0 -ggdb -fsanitize=address -fno-omit-frame-pointer -DDEBUG_BUILD=1 -o build/server linux_main.cpp server.cpp
+debug: $(DEPS) 
+	g++ $(DEBUG_FLAGS) $(COMMON_FLAGS) $(UNITS)
 
-build: server.h
-	g++ -Wall -Werror -O3 -std=c++11 -o build/server linux_main.cpp server.cpp
+release: $(DEPS)
+	g++ $(RELEASE_FLAGS) $(COMMON_FLAGS) $(UNITS)
+
+all: release
 	
+
+$(shell mkdir -p $(BUILD_DIR))
