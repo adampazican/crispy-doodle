@@ -33,19 +33,14 @@ void handle_request(i32 fileDescriptor, char* incomingBuffer, i32 incomingBuffer
 {
     Player newPLayer = *(Player*) incomingBuffer;
     
-    
-    
     Game game = {
-        .gameState = WAITING,
-        .playerTurnId = 1
+        WAITING,
+        1
     };
     
     game.players[0].playerId = 2;
     
-    if(sizeof(game) > outgoingBufferLength) {
-        //TODO: error for now, maybe realloc buffer to be bigger
-        return;
-    }
+    assert(sizeof(game) <= (u32)outgoingBufferLength);
     
     memcpy(outgoingBuffer, &game, sizeof(game));
     
