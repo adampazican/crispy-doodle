@@ -6,7 +6,6 @@
 #define FIGURES_FOR_PLAYERS 4
 #define NUMBER_OF_PLAYERS 4
 #define HOUSE_SIZE 4
-#define FINISH_SIZE 4
 #define GAME_SIZE 32
 
 #define size(array) (int) (sizeof(array) / sizeof(array[0]))
@@ -155,6 +154,8 @@ Coordinates getSquareInGame(int possition,int playerId) {
 	return coordinates;
 }
 
+
+
 void vykresli(Square squeres[11][11]) 
 {
 	for (int i = 0; i < 11; i++)
@@ -217,7 +218,7 @@ void vykresli(Square squeres[11][11])
 
 int getNumber()
 {
-	return rand() % 4 + 3;
+	return rand() % 6 + 1;
 }
 
 bool allInHouse(Player player)
@@ -243,20 +244,16 @@ bool playable(Player player, int numFig, int roll) {
 			return false;
 		else
 		{
-			Coordinates poss = getSquareInFinish(player.figurines[numFig].position + roll, player.playerId);
-			int surX = poss.x;
-			int surY = poss.y;
+			struct Coordinates poss = getSquareInFinish(player.figurines[numFig].position + roll, player.playerId);
             
 			{
 				for (int i = 0; i < HOUSE_SIZE; i++)
 				{
 					if (player.figurines[i].figurineState == FigureState::IN_FINISH && i != numFig)
 					{
-						poss = getSquareInFinish(player.figurines[i].position, player.playerId);
-						int surX2 = poss.x;
-						int surY2 = poss.y;
+						struct Coordinates poss2 = getSquareInFinish(player.figurines[i].position, player.playerId);
                         
-						if (surX == surX2 && surY == surY2)
+						if (poss.x == poss2.x && poss.y == poss2.y)
 							return false;
 					}
 				}
@@ -265,9 +262,7 @@ bool playable(Player player, int numFig, int roll) {
 	}
 	else if (player.figurines[numFig].figurineState == FigureState::IN_GAME)
 	{
-		Coordinates poss = getSquareInGame(player.figurines[numFig].position + roll, player.playerId);
-		int surX = poss.x;
-		int surY = poss.y;
+		struct Coordinates poss = getSquareInGame(player.figurines[numFig].position + roll, player.playerId);
         
 		//pytam sa ci ide uz do ciela, v cieli sa uz neda posunut
 		if (player.figurines[numFig].position + roll <= 37)
@@ -277,11 +272,9 @@ bool playable(Player player, int numFig, int roll) {
 			{
                 
 				if (player.figurines[i].figurineState == FigureState::IN_GAME && i != numFig) {
-					poss = getSquareInGame(player.figurines[i].position, player.playerId);
-					int surX2 = poss.x;
-					int surY2 = poss.y;
+					struct Coordinates poss2 = getSquareInGame(player.figurines[i].position, player.playerId);
                     
-					if (surX == surX2 && surY == surY2)
+					if (poss.x == poss2.x && poss.y == poss2.y)
 						return false;
 				}
 			}
@@ -293,19 +286,15 @@ bool playable(Player player, int numFig, int roll) {
 				return false;
 			else 
 			{
-				poss = getSquareInFinish(possFinish, player.playerId);
-				surX = poss.x;
-				surY = poss.y;
+				struct Coordinates poss = getSquareInFinish(possFinish, player.playerId);
                 
 				for (int  i = 0; i < HOUSE_SIZE; i++)
 				{
 					if (player.figurines[i].figurineState == FigureState::IN_FINISH && i != numFig)
 					{
-						poss = getSquareInFinish(player.figurines[i].position, player.playerId);
-						int surX2 = poss.x;
-						int surY2 = poss.y;
+						struct Coordinates poss2 = getSquareInFinish(player.figurines[i].position, player.playerId);
                         
-						if (surX == surX2 && surY == surY2)
+						if (poss.x == poss2.x && poss.y == poss2.y)
 							return false;
 					}
 				}
@@ -344,7 +333,7 @@ bool allInFinish(Player player)
 void PressEnterToContinue()
 {
 	int c;
-	printf("Press ENTER to roll ");
+	printf("Press ENTER to roll. ");
 	fflush(stdout);
 	do c = getchar(); while ((c != '\n') && (c != EOF));
 }
@@ -470,9 +459,7 @@ int main()
 			game.players[i].figurines[j].position = j + 1;
 			
 			Coordinates suradnice = getSquareInHouse(j + 1, i);
-			int surX = suradnice.x;
-			int surY = suradnice.y;
-			squeres[surY][surX].character = '0' + game.players[i].figurines[j].position;
+			squeres[suradnice.y][suradnice.x].character = '0' + game.players[i].figurines[j].position;
 		}
 	}
     
@@ -587,17 +574,13 @@ int main()
 				if (game.players[game.turnId].figurines[figNumber].figurineState == FigureState::IN_HOUSE && maxNumber == 6)
 				{
 					Coordinates poss = getSquareInHouse(game.players[game.turnId].figurines[figNumber].position, game.turnId);
-					int surX = poss.x;
-					int surY = poss.y;
-					squeres[surY][surX].character = '0';
+					squeres[poss.y][poss.x].character = '0';
                     
 					game.players[game.turnId].figurines[figNumber].position = 0;
 					game.players[game.turnId].figurines[figNumber].figurineState = FigureState::IN_GAME;
                     
 					poss = getSquareInGame(game.players[game.turnId].figurines[figNumber].position, game.turnId);
-					surX = poss.x;
-					surY = poss.y;
-					squeres[surY][surX].character = '0' + (figNumber + 1);
+					squeres[poss.y][poss.x].character = '0' + (figNumber + 1);
                     
 					system("clear");
 					vykresli(squeres);
@@ -607,11 +590,9 @@ int main()
 				{
 					//vyprazdni policko
 					Coordinates poss = getSquareInGame(game.players[game.turnId].figurines[figNumber].position, game.turnId);
-					int surX = poss.x;
-					int surY = poss.y;
                     
-					squeres[surY][surX].character = 'O';
-					squeres[surY][surX].color = Color::WHITE;
+					squeres[poss.y][poss.x].character = 'O';
+					squeres[poss.y][poss.x].color = Color::WHITE;
                     
 					//ak je to pociatocne policko nemeni farbu
 					if (game.players[game.turnId].figurines[figNumber].position == 0)
@@ -624,8 +605,8 @@ int main()
 							}
 						}
                         
-						squeres[surY][surX].character = '0' + figInStart;
-						squeres[surY][surX].color = getColorByTurnId(game.turnId);
+						squeres[poss.y][poss.x].character = '0' + figInStart;
+						squeres[poss.y][poss.x].color = getColorByTurnId(game.turnId);
                         
 					}
                     
@@ -636,19 +617,15 @@ int main()
 						game.players[game.turnId].figurines[figNumber].figurineState = FigureState::IN_FINISH;
 						game.players[game.turnId].figurines[figNumber].position += maxNumber - 37;
 						poss = getSquareInFinish(game.players[game.turnId].figurines[figNumber].position, game.turnId);
-						surX = poss.x;
-						surY = poss.y;
-						squeres[surY][surX].character = '0' + figNumber + 1;
+						squeres[poss.y][poss.x].character = '0' + figNumber + 1;
 					}
 					else
 					{
 						//posunie na nove miesto na hracej ploche
 						poss = getSquareInGame(game.players[game.turnId].figurines[figNumber].position + maxNumber, game.turnId);
 						game.players[game.turnId].figurines[figNumber].position += maxNumber;
-						surX = poss.x;
-						surY = poss.y;
-						squeres[surY][surX].character = '0' + figNumber + 1;
-						squeres[surY][surX].color = getColorByTurnId(game.turnId);
+						squeres[poss.y][poss.x].character = '0' + figNumber + 1;
+						squeres[poss.y][poss.x].color = getColorByTurnId(game.turnId);
 					}
 					
                     
@@ -661,18 +638,14 @@ int main()
 							if (game.turnId != i && game.players[i].figurines[j].figurineState == FigureState::IN_GAME)
 							{
 								Coordinates pom1 = getSquareInGame(game.players[i].figurines[j].position, i);
-								int surX2 = pom1.x;
-								int surY2 = pom1.y;
                                 
-								if (surX == surX2 && surY == surY2)
+								if (poss.x == pom1.x && poss.y == pom1.y)
 								{
 									cout << "vykopol si figurku" << endl;
 									game.players[i].figurines[j].position = j + 1;
 									game.players[i].figurines[j].figurineState = FigureState::IN_HOUSE;
 									pom1 = getSquareInHouse(game.players[i].figurines[j].position, i);
-									surX2 = pom1.x;
-									surY2 = pom1.y;
-									squeres[surY2][surX2].character = '0' + (j + 1);
+									squeres[pom1.y][pom1.x].character = '0' + (j + 1);
 								}
 							}
 						}
@@ -686,14 +659,10 @@ int main()
 				else if (game.players[game.turnId].figurines[figNumber].figurineState == FigureState::IN_FINISH)
 				{
 					Coordinates poss = getSquareInFinish(game.players[game.turnId].figurines[figNumber].position, game.turnId);
-					int surX = poss.x;
-					int surY = poss.y;
-					squeres[surY][surX].character = 'O';
+					squeres[poss.y][poss.x].character = 'O';
                     
 					poss = getSquareInFinish(game.players[game.turnId].figurines[figNumber].position + maxNumber, game.turnId);
-					surX = poss.x;
-					surY = poss.y;
-					squeres[surY][surX].character = '0' + figNumber + 1;
+					squeres[poss.y][poss.x].character = '0' + figNumber + 1;
                     
 					game.players[game.turnId].figurines[figNumber].position += maxNumber;
 				}
