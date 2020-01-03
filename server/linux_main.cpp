@@ -45,15 +45,6 @@ void sig_handler(i32 sigNo)
 }
 #endif
 
-internal
-i32 strlen(char* buffer) 
-{
-    i32 result = 0;
-    
-    while(buffer[result] != '\0') result++;
-    return result;
-}
-
 int main() {
 #if DEBUG_BUILD
     if(signal(SIGINT, sig_handler) == SIG_ERR){
