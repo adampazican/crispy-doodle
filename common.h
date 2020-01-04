@@ -32,4 +32,7 @@ struct Game {
 	GameState gameState;
 	Player players[4];
 	int turnId;
+	int numberOfPlayers;
+	int maxNumberOfPlayers;
+	bool newPlayer;
 };

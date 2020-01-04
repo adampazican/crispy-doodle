@@ -11,28 +11,6 @@
 #include "definitions.h"
 #include "server.h"
 
-struct Array{
-    u32 size;
-    u32 capacity; 
-    char data[];
-};
-
-#define array_alloc(type, size) arrayAlloc_(sizeof(type), size)
-
-Array* arrayAlloc_(u32 length, u32 size) {
-    Array* result = (Array*) malloc(sizeof(u32) * 2 + size*length);
-    result->size = 0;
-    result->capacity = size;
-    return result;
-}
-
-#define array_realloc(array, type, size) arrayRealloc_(array, sizeof(type), size) 
-
-Array* arrayRealloc_(Array* array, u32 size, u32 newLength) {
-    Array* result = (Array*) realloc(array, sizeof(u32) * 2 + size*newLength); 
-    result->capacity = newLength;
-    return result;
-}
 
 global_variable bool isRunning = true;
 #if DEBUG_BUILD
@@ -83,7 +61,11 @@ int main() {
     {
         printf("error3%d\n", errno);
     }
-    
+
+    Game game = {};
+    game.maxNumberOfPlayers = 2;
+    game.numberOfPlayers = 0;
+
     while(isRunning) {
         sockaddr_in clientAddr = {};
         socklen_t clientAddrLen = 0;
@@ -94,10 +76,8 @@ int main() {
             printf("error4\n");
         }
         else if (fd > 0){
-            char* incomingBuffer = (char*) malloc(2000);
+            char* incomingBuffer = (char*) malloc(1000);
             i32 incomingBufferLength = 1000;
-            char* outgoingBuffer = &incomingBuffer[1000]; //TODO: make request struct
-            i32 outgoingBufferLength = 1000;
             
             if(!read(fd, incomingBuffer, incomingBufferLength)){
                 printf("error reading data: %d", errno);
@@ -108,7 +88,7 @@ int main() {
             //TODO: create new thread for handle_request 
             //pass buffers to handle_request but it must clean after itself
             
-            handle_request(fd, incomingBuffer, incomingBufferLength, outgoingBuffer, outgoingBufferLength);
+            handle_request(fd, incomingBuffer, incomingBufferLength, &game);
         }
     }
     

@@ -188,20 +188,24 @@ void draw(Game game)
 			Color color = getColorByTurnId(i);
 			struct Coordinates poss;
 
-			switch (state)
+			if (game.players[i].figurines[j].position != 0 && state == FigureState::IN_HOUSE)
 			{
-				case FigureState::IN_HOUSE:
-					poss = getSquareInHouse(possition,i);
-					break;
-				case FigureState::IN_GAME:
-					poss = getSquareInGame(possition,i);
-					break;
-				case FigureState::IN_FINISH:
-					poss = getSquareInFinish(possition,i);
-					break;
+				switch (state)
+				{
+					case FigureState::IN_HOUSE:
+						poss = getSquareInHouse(possition,i);
+						break;
+					case FigureState::IN_GAME:
+						poss = getSquareInGame(possition,i);
+						break;
+					case FigureState::IN_FINISH:
+						poss = getSquareInFinish(possition,i);
+						break;
+				}
+				squares[poss.y][poss.x].character = '0' + (j + 1);
+				squares[poss.y][poss.x].color = color;
 			}
-			squares[poss.y][poss.x].character = '0' + (j + 1);
-			squares[poss.y][poss.x].color = color;
+			
 		}		
 	}
 	
@@ -465,32 +469,21 @@ for (int  i = 0; i < 11; i++)
 	}
 }
 
-int main(int argc, char *argv[])
+Game communicateWithServer(Game game) 
 {
-	srand(time(NULL));
-    
-	//pocet hracov v hre
-	numberOfPlayers = 2;
-
-	int sockfd, n;
+	int sockfd;
 	sockaddr_in serv_addr;
 	hostent* server;
 	
-	Game game = {};
-
-	//kontroluje pocet argumentov
-	if (argc < 3) 
-	{
-		fprintf(stderr,"usage %s hostname port\n", argv[0]);
-		return 1;
-	}
+#define hostname "localhost"
+#define port "3000" //TODO: load as param
 
 	//Použijeme funkciu gethostbyname na získanie informácii o počítači, ktorého hostname je v prvom argumente.
-	server = gethostbyname(argv[1]); 
+	server = gethostbyname(hostname); 
 	if (server == NULL)
 	{
 		fprintf(stderr, "Error, no such host\n");
-		return 2;
+		return game;
 	}
 
 	//Vynulujeme a zinicializujeme adresu, na ktorú sa budeme pripájať.
@@ -501,56 +494,121 @@ int main(int argc, char *argv[])
 		(char*)&serv_addr.sin_addr.s_addr,
 		server->h_length
 	);
-	serv_addr.sin_port = htons(atoi(argv[2]));
+	serv_addr.sin_port = htons(atoi(port));
 
 	//Vytvoríme si socket v doméne AF_INET.
 	sockfd = socket(AF_INET, SOCK_STREAM, 0); 
 	if (sockfd < 0)
 	{
 		perror("Error creating socket");
-		return 3;
 	}
 
 	//Pripojíme sa na zadanú sieťovú adresu.
 	if(connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)  
 	{
 		 perror("Error connecting to socket");
-		 return 4;
 	}	
 
-	n = write(sockfd, (char*) &game, sizeof(game)); 
-	if (n < 0)
+	write(sockfd, (char*) &game, sizeof(game)); 
+	int err = read(sockfd, &game, sizeof(game)); 
+	if(err)
 	{
-		 perror("Error writing to socket");
-		 return 5;
-	}
-
-	n = read(sockfd, (char*)&game, sizeof(game)); 
-	if (n < 0)
-	{
-		 perror("Error reading from socket");
-		 return 6;
+		printf("%i", errno);
 	}
 
 	close(sockfd);
+	return game;
+}
 
-#if 0
-	Game game;
-	game.gameState = GameState::PLAYING;
-	game.turnId = 0;
+int main(int argc, char *argv[])
+{
+	srand(time(NULL));
     
-	for (int i = 0; i <  numberOfPlayers ; i++)
-	{
-		game.players[i].playerId = i;
-        
-		for (int j = 0; j < FIGURES_FOR_PLAYERS; j++)
+	//pocet hracov v hre
+	
+	Player* player;
+	Game gameEmpty = {};
+	Game game = communicateWithServer(gameEmpty);
+	numberOfPlayers = game.maxNumberOfPlayers;
+	int playerId = game.numberOfPlayers;
+	clearBoard();
+	draw(game);
+
+	while(1) {
+		sleep(0.3);
+		game = communicateWithServer(gameEmpty);
+
+		if(game.turnId == playerId && game.gameState == GameState::PLAYING)
 		{
-			game.players[i].figurines[j].figurineState = FigureState::IN_HOUSE;
-			game.players[i].figurines[j].position = j + 1;
+		
+			system("clear");
+			clearBoard();
+			draw(game);
+			
+			if (game.turnId == 0)
+				cout << "\033[1;31m" << "Red on the turn" << "\033[0m" << endl;
+			else if (game.turnId == 1)
+				cout << "\033[1;32m" << "Green on the turn." << "\033[0m" << endl;
+			else if (game.turnId == 2)
+				cout << "\033[1;33m" << "Yellow on the turn." << "\033[0m" << endl;
+			else if (game.turnId == 3)
+				cout << "\033[1;34m" << "Blue on the turn." << "\033[0m" << endl;
+			
+			//ak ma vsetkych v domceku caka kym nehodi 6, hadze 3 krat
+			int number = 0;
+			int numberOfSix = 0;
+			
+			//ak v tych troch pokusoch padne 3 skonci
+			if (allInHouse(game.players[game.turnId]))
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					PressEnterToContinue(0);
+					number = getNumber();
+					cout << "You got number " << number << endl;
+					
+					if (number == 6)
+					{
+						numberOfSix++;
+						break;
+					}
+					
+				}
+			}
+			else if (allInFinish(game.players[game.turnId]))
+			{
+				numberOfSix = -1;
+				number = 0;
+			}
+			else {		//ak nema vsetkych v domceku hadze iba raz
+				PressEnterToContinue(0);
+				number = getNumber();
+				cout << "You got number " << number << endl;
+				if (number == 6)
+					numberOfSix++;
+			}
+			//ak hodi sestku hadze znova
+			while (number == 6)
+			{
+				PressEnterToContinue(0);
+				number = getNumber();
+				cout << "You got number " << number << endl;
+				if (number == 6)
+					numberOfSix++;
+			}
+
+			PressEnterToContinue(1);
+
+			game = communicateWithServer(game);
 		}
+
+		system("clear");
+		clearBoard();
+		draw(game);
 	}
 
-	game.turnId = 0;
+#if 0
+
     
 	int umiestnenie[4];
 	bool ukoncene[4];
@@ -564,66 +622,7 @@ int main(int argc, char *argv[])
     
 	while (game.gameState != GameState::FINISHED)
 	{
-		system("clear");
-		clearBoard();
-		draw(game);
-        
-		game.turnId %= numberOfPlayers;
 		
-        
-		if (game.turnId == 0)
-			cout << "\033[1;31m" << "Red on the turn" << "\033[0m" << endl;
-		else if (game.turnId == 1)
-			cout << "\033[1;32m" << "Green on the turn." << "\033[0m" << endl;
-		else if (game.turnId == 2)
-			cout << "\033[1;33m" << "Yellow on the turn." << "\033[0m" << endl;
-		else if (game.turnId == 3)
-			cout << "\033[1;34m" << "Blue on the turn." << "\033[0m" << endl;
-        
-		//ak ma vsetkych v domceku caka kym nehodi 6, hadze 3 krat
-		int number = 0;
-		int numberOfSix = 0;
-        
-		//ak v tych troch pokusoch padne 3 skonci
-		if (allInHouse(game.players[game.turnId]))
-		{
-			for (int i = 0; i < 3; i++)
-			{
-				PressEnterToContinue(0);
-				number = getNumber();
-				cout << "You got number " << number << endl;
-				
-				if (number == 6)
-				{
-					numberOfSix++;
-					break;
-				}
-                
-			}
-		}
-		else if (allInFinish(game.players[game.turnId]))
-		{
-			numberOfSix = -1;
-			number = 0;
-		}
-		else {		//ak nema vsetkych v domceku hadze iba raz
-			PressEnterToContinue(0);
-			number = getNumber();
-			cout << "You got number " << number << endl;
-			if (number == 6)
-				numberOfSix++;
-		}
-		//ak hodi sestku hadze znova
-		while (number == 6)
-		{
-			PressEnterToContinue(0);
-			number = getNumber();
-			cout << "You got number " << number << endl;
-			if (number == 6)
-				numberOfSix++;
-		}
-
-		PressEnterToContinue(1);
 
 		while (numberOfSix >= 0)
 		{

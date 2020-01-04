@@ -11,5 +11,4 @@
 #include "definitions.h"
 #include "../common.h"
 
-void handle_request(i32 fileDescriptor, char* incomingBuffer, i32 incomingBufferLength,
-                    char* outgoingBuffer, i32 outgoingBufferLength);
+void handle_request(i32 fileDescriptor, char* incomingBuffer, i32 incomingBufferLength, Game* game);
