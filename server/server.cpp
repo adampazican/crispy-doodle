@@ -2,7 +2,9 @@
 
 void handle_request(i32 fileDescriptor, char* incomingBuffer, i32 incomingBufferLength, char* outgoingBuffer, i32 outgoingBufferLength) 
 {
-    //Player newPLayer = *(Player*) incomingBuffer;
+    Player newPLayer = *(Player*) incomingBuffer;
+
+    printf("%s", (char*) &newPLayer);
     
     Game game = {
         WAITING,

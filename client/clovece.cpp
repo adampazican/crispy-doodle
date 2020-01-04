@@ -3,6 +3,15 @@
 #include <time.h>
 #include "../common.h"
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #define FIGURES_FOR_PLAYERS 4
 #define HOUSE_SIZE 4
 #define GAME_SIZE 32
@@ -456,13 +465,77 @@ for (int  i = 0; i < 11; i++)
 	}
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 	srand(time(NULL));
     
+	//pocet hracov v hre
 	numberOfPlayers = 2;
 
-	struct Game game;
+	int sockfd, n;
+	sockaddr_in serv_addr;
+	hostent* server;
+	
+	Game game = {};
+
+	//kontroluje pocet argumentov
+	if (argc < 3) 
+	{
+		fprintf(stderr,"usage %s hostname port\n", argv[0]);
+		return 1;
+	}
+
+	//Použijeme funkciu gethostbyname na získanie informácii o počítači, ktorého hostname je v prvom argumente.
+	server = gethostbyname(argv[1]); 
+	if (server == NULL)
+	{
+		fprintf(stderr, "Error, no such host\n");
+		return 2;
+	}
+
+	//Vynulujeme a zinicializujeme adresu, na ktorú sa budeme pripájať.
+	bzero((char*)&serv_addr, sizeof(serv_addr)); 
+	serv_addr.sin_family = AF_INET;
+	bcopy(
+		(char*)server->h_addr,
+		(char*)&serv_addr.sin_addr.s_addr,
+		server->h_length
+	);
+	serv_addr.sin_port = htons(atoi(argv[2]));
+
+	//Vytvoríme si socket v doméne AF_INET.
+	sockfd = socket(AF_INET, SOCK_STREAM, 0); 
+	if (sockfd < 0)
+	{
+		perror("Error creating socket");
+		return 3;
+	}
+
+	//Pripojíme sa na zadanú sieťovú adresu.
+	if(connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)  
+	{
+		 perror("Error connecting to socket");
+		 return 4;
+	}	
+
+	n = write(sockfd, (char*) &game, sizeof(game)); 
+	if (n < 0)
+	{
+		 perror("Error writing to socket");
+		 return 5;
+	}
+
+	n = read(sockfd, (char*)&game, sizeof(game)); 
+	if (n < 0)
+	{
+		 perror("Error reading from socket");
+		 return 6;
+	}
+
+	close(sockfd);
+
+#if 0
+	Game game;
 	game.gameState = GameState::PLAYING;
 	game.turnId = 0;
     
@@ -496,6 +569,7 @@ int main()
 		draw(game);
         
 		game.turnId %= numberOfPlayers;
+		
         
 		if (game.turnId == 0)
 			cout << "\033[1;31m" << "Red on the turn" << "\033[0m" << endl;
@@ -688,4 +762,6 @@ int main()
 		cout << i + 1 << ". miesto: hrac cislo: " << umiestnenie[i] << endl;
 	}
     
+#else
+#endif
 }

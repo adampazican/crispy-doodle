@@ -22,7 +22,7 @@ debugc: $(DEPSC)
 	g++ $(DEBUG_FLAGS) $(COMMON_FLAGS) $(UNITSC) -o build/client
 
 releasec: $(DEPSC)
-	g++ $(RELEASE_FLAGS) $(COMMON_FLAGS) $(UNITSC) -o build/server
+	g++ $(RELEASE_FLAGS) $(COMMON_FLAGS) $(UNITSC) -o build/client
 
 debug: debugs debugc
 release: releases releasec
