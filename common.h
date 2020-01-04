@@ -25,6 +25,7 @@ struct Figurine {
 
 struct Player {
 	int playerId;
+	bool playingHand;
 	Figurine figurines[4];
 };
 
@@ -34,5 +35,4 @@ struct Game {
 	int turnId;
 	int numberOfPlayers;
 	int maxNumberOfPlayers;
-	bool newPlayer;
 };

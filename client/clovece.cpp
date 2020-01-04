@@ -187,20 +187,20 @@ void draw(Game game)
 			int possition = game.players[i].figurines[j].position;
 			Color color = getColorByTurnId(i);
 			struct Coordinates poss;
-
+            
 			if (game.players[i].figurines[j].position != 0 && state == FigureState::IN_HOUSE)
 			{
 				switch (state)
 				{
 					case FigureState::IN_HOUSE:
-						poss = getSquareInHouse(possition,i);
-						break;
+                    poss = getSquareInHouse(possition,i);
+                    break;
 					case FigureState::IN_GAME:
-						poss = getSquareInGame(possition,i);
-						break;
+                    poss = getSquareInGame(possition,i);
+                    break;
 					case FigureState::IN_FINISH:
-						poss = getSquareInFinish(possition,i);
-						break;
+                    poss = getSquareInFinish(possition,i);
+                    break;
 				}
 				squares[poss.y][poss.x].character = '0' + (j + 1);
 				squares[poss.y][poss.x].color = color;
@@ -208,6 +208,8 @@ void draw(Game game)
 			
 		}		
 	}
+
+	cout << "turnId: " <<  game.turnId << endl;
 	
 	for (int i = 0; i < 11; i++)
 	{
@@ -373,7 +375,7 @@ bool allInFinish(Player player)
 
 void PressEnterToContinue(int number)
 {
-
+    
 	int c;
 	if (number == 0)
 		printf("Press ENTER to roll. ");
@@ -386,8 +388,8 @@ void PressEnterToContinue(int number)
 }
 
 void clearBoard() {
-
-for (int  i = 0; i < 11; i++)
+    
+    for (int  i = 0; i < 11; i++)
 	{
 		for (int  j = 0; j < 11; j++)
 		{
@@ -469,15 +471,17 @@ for (int  i = 0; i < 11; i++)
 	}
 }
 
-Game communicateWithServer(Game game) 
+Game communicateWithServer(Player player) 
 {
 	int sockfd;
 	sockaddr_in serv_addr;
 	hostent* server;
+    
+    Game game = {};
 	
 #define hostname "localhost"
 #define port "3000" //TODO: load as param
-
+    
 	//Použijeme funkciu gethostbyname na získanie informácii o počítači, ktorého hostname je v prvom argumente.
 	server = gethostbyname(hostname); 
 	if (server == NULL)
@@ -485,7 +489,7 @@ Game communicateWithServer(Game game)
 		fprintf(stderr, "Error, no such host\n");
 		return game;
 	}
-
+    
 	//Vynulujeme a zinicializujeme adresu, na ktorú sa budeme pripájať.
 	bzero((char*)&serv_addr, sizeof(serv_addr)); 
 	serv_addr.sin_family = AF_INET;
@@ -493,29 +497,29 @@ Game communicateWithServer(Game game)
 		(char*)server->h_addr,
 		(char*)&serv_addr.sin_addr.s_addr,
 		server->h_length
-	);
+        );
 	serv_addr.sin_port = htons(atoi(port));
-
+    
 	//Vytvoríme si socket v doméne AF_INET.
 	sockfd = socket(AF_INET, SOCK_STREAM, 0); 
 	if (sockfd < 0)
 	{
 		perror("Error creating socket");
 	}
-
+    
 	//Pripojíme sa na zadanú sieťovú adresu.
 	if(connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)  
 	{
-		 perror("Error connecting to socket");
+        perror("Error connecting to socket");
 	}	
-
-	write(sockfd, (char*) &game, sizeof(game)); 
+    
+	write(sockfd, &player, sizeof(player)); 
 	int err = read(sockfd, &game, sizeof(game)); 
 	if(err)
 	{
 		printf("%i", errno);
 	}
-
+    
 	close(sockfd);
 	return game;
 }
@@ -526,21 +530,20 @@ int main(int argc, char *argv[])
     
 	//pocet hracov v hre
 	
-	Player* player;
-	Game gameEmpty = {};
-	Game game = communicateWithServer(gameEmpty);
-	numberOfPlayers = game.maxNumberOfPlayers;
-	int playerId = game.numberOfPlayers;
+    Player player = {};
+	Game game = communicateWithServer(player);
+	numberOfPlayers = game.numberOfPlayers;
+    player = game.players[game.numberOfPlayers-1];
 	clearBoard();
 	draw(game);
-
+    
 	while(1) {
 		sleep(0.3);
-		game = communicateWithServer(gameEmpty);
-
-		if(game.turnId == playerId && game.gameState == GameState::PLAYING)
+		game = communicateWithServer(player);
+        
+		if(game.turnId == player.playerId && game.gameState == GameState::PLAYING)
 		{
-		
+            
 			system("clear");
 			clearBoard();
 			draw(game);
@@ -596,19 +599,21 @@ int main(int argc, char *argv[])
 				if (number == 6)
 					numberOfSix++;
 			}
-
+            
 			PressEnterToContinue(1);
 
-			game = communicateWithServer(game);
+            player.playingHand = true;
+			game = communicateWithServer(player);
+			player.playingHand = false;
 		}
-
+        
 		system("clear");
 		clearBoard();
 		draw(game);
 	}
-
+    
 #if 0
-
+    
     
 	int umiestnenie[4];
 	bool ukoncene[4];
@@ -623,13 +628,13 @@ int main(int argc, char *argv[])
 	while (game.gameState != GameState::FINISHED)
 	{
 		
-
+        
 		while (numberOfSix >= 0)
 		{
 			system("clear");
 			clearBoard();
 			draw(game);
-
+            
 			if (game.turnId == 0)
 				cout << "\033[1;31m" << "Red on the turn" << "\033[0m" << endl;
 			else if (game.turnId == 1)
@@ -638,7 +643,7 @@ int main(int argc, char *argv[])
 				cout << "\033[1;33m" << "Yellow on the turn." << "\033[0m" << endl;
 			else if (game.turnId == 3)
 				cout << "\033[1;34m" << "Blue on the turn." << "\033[0m" << endl;
-
+            
 			int maxNumber = 0;
             
 			if (numberOfSix > 0)
@@ -694,7 +699,7 @@ int main(int argc, char *argv[])
 					else
 					{
 						game.players[game.turnId].figurines[figNumber].position += maxNumber;
-
+                        
 						//overenie ci som nevykopol figurku  
 						for (int i = 0; i < numberOfPlayers; i++)
 						{
@@ -704,7 +709,7 @@ int main(int argc, char *argv[])
 								{
 									Coordinates poss = getSquareInGame(game.players[game.turnId].figurines[figNumber].position, game.turnId);
 									Coordinates pom1 = getSquareInGame(game.players[i].figurines[j].position, i);
-
+                                    
 									if (poss.x == pom1.x && poss.y == pom1.y)
 									{
 										game.players[i].figurines[j].position = j + 1;
@@ -719,7 +724,7 @@ int main(int argc, char *argv[])
 				{   
 					game.players[game.turnId].figurines[figNumber].position += maxNumber;	
 				}
-
+                
 				system("clear");
 				clearBoard();
 				draw(game);

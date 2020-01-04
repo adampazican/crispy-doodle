@@ -1,6 +1,6 @@
 BUILD_DIR=build
 COMMON_FLAGS=-std=c++11 -Wall
-DEBUG_FLAGS=-O0 -ggdb -fsanitize=address -fno-omit-frame-pointer -DDEBUG_BUILD=1
+DEBUG_FLAGS=-O0 -ggdb -DDEBUG_BUILD=1
 RELEASE_FLAGS=-Werror -O3
 DEPSS=server/server.h common.h
 UNITSS=server/linux_main.cpp server/server.cpp
