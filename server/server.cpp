@@ -13,7 +13,7 @@ void handle_turn(Game* game)
             {
                 Coordinates poss = getSquareInGame(game->players[game->turnId].figurines[j].position, game->turnId);
                 Coordinates pom1 = getSquareInGame(game->players[i].figurines[j].position, i);
-
+                
                 if (poss.x == pom1.x && poss.y == pom1.y)
                 {
                     game->players[i].figurines[j].position = j + 1;
@@ -22,7 +22,20 @@ void handle_turn(Game* game)
             }
         }
     }
+    
+}
 
+bool allInFinish(Player player)
+{
+    int number = 0;
+    
+    for (int i = 0; i < HOUSE_SIZE; i++)
+    {
+        if (player.figurines[i].figurineState == FigureState::IN_FINISH)
+            number++;
+    }
+    
+    return number == 4 ? true : false;
 }
 
 void handle_request(i32 fileDescriptor, char* incomingBuffer, i32 incomingBufferLength, Game* game) 
@@ -50,9 +63,18 @@ void handle_request(i32 fileDescriptor, char* incomingBuffer, i32 incomingBuffer
     {
         game->players[newPlayer.playerId] = newPlayer;
         handle_turn(game);
-        game->turnId++;
-        game->turnId %= game->maxNumberOfPlayers;
         game->players[newPlayer.playerId].playingHand = false;
+        
+        if(allInFinish(game->players[game->turnId]))
+        {
+            game->gameState = GameState::FINISHED;
+            game->winnerId = game->turnId;
+        }
+        else
+        {
+            game->turnId++;
+            game->turnId %= game->maxNumberOfPlayers;
+        }
     }
     
     if(!send(fileDescriptor, game, sizeof(*game), 0)){

@@ -35,6 +35,7 @@ struct Game {
 	int turnId;
 	int numberOfPlayers;
 	int maxNumberOfPlayers;
+    int winnerId;
 };
 
 struct Coordinates
@@ -43,6 +44,7 @@ struct Coordinates
 };
 
 #define size(array) (int) (sizeof(array) / sizeof(array[0]))
+#define HOUSE_SIZE 4
 
 static Coordinates getSquareInGame(int possition,int playerId) {
 	int numbers[] = { 2, 4, 4, 2, -4, 4, -2, -4, -4, -2, 4, -4};

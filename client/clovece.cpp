@@ -312,13 +312,14 @@ void PressEnterToContinue(int number)
     
 	int c;
 	if (number == 0)
-		printf("Press ENTER to roll. ");
+		cout << "Press ENTER to roll. ";
 	else if (number == 1)
-		printf("Press ENTER to contunie in turn.");
+		cout << "Press ENTER to contunie in turn.";
 	else 
-		printf("Press ENTER to finsih turn.");
-	fflush(stdout);
-	do c = getchar(); while ((c != '\n') && (c != EOF));
+		cout << "Press ENTER to finsih turn.";
+
+    cin.clear();
+    cin.get();
 }
 
 void clearBoard() {
@@ -420,7 +421,7 @@ Game communicateWithServer(Player player)
 	server = gethostbyname(hostname); 
 	if (server == NULL)
 	{
-		fprintf(stderr, "Error, no such host\n");
+		//fprintf(stderr, "Error, no such host\n");
 		return game;
 	}
     
