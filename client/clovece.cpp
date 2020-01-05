@@ -312,11 +312,11 @@ void PressEnterToContinue(int number)
     
 	int c;
 	if (number == 0)
-		cout << "Press ENTER to roll. ";
+		cout << "Press ENTER to roll. " << endl;
 	else if (number == 1)
-		cout << "Press ENTER to contunie in turn.";
+		cout << "Press ENTER to contunie in turn." << endl;
 	else 
-		cout << "Press ENTER to finsih turn.";
+		cout << "Press ENTER to finsih turn." << endl;
 
     cin.clear();
     cin.get();
@@ -468,13 +468,22 @@ int main(int argc, char *argv[])
 	system("clear");
 	clearBoard();
 	draw(game);
-    
+        
 	while(1) {
 		sleep(0.3);
 		Game oldGame = game;
 		game = communicateWithServer(player);
 		numberOfPlayers = game.numberOfPlayers;
-
+        
+        if(game.gameState == GameState::FINISHED)
+        {
+            system("clear");
+            clearBoard();
+            draw(game);
+            cout << "Vyhral hráč " << game.turnId << endl;
+            break;
+        }
+        
 		if(memcmp(&game, &oldGame, sizeof(Game)) == 0)
 		{
 			continue;
@@ -627,6 +636,16 @@ int main(int argc, char *argv[])
 			}
 
 			player.playingHand = true;
+#if 0
+            player.figurines[0].position = 1;
+            player.figurines[0].figurineState = FigureState::IN_FINISH;
+            player.figurines[1].position = 2;
+            player.figurines[1].figurineState = FigureState::IN_FINISH;
+            player.figurines[2].position = 3;
+            player.figurines[2].figurineState = FigureState::IN_FINISH;
+            player.figurines[3].position = 4;
+            player.figurines[3].figurineState = FigureState::IN_FINISH;
+#endif            
 			game = communicateWithServer(player);
 			player.playingHand = false;
 		}
