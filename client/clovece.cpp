@@ -16,18 +16,11 @@
 #define HOUSE_SIZE 4
 #define GAME_SIZE 32
 
-#define size(array) (int) (sizeof(array) / sizeof(array[0]))
-
 using namespace std;
 
 struct Square {
 	char character;
 	Color color;
-};
-
-struct Coordinates
-{
-    int x,y;
 };
 
 Square squares[11][11];
@@ -109,61 +102,6 @@ Coordinates getSquareInHouse(int possition, int playerId)
 	return coordinates;
 }
 
-Coordinates getSquareInGame(int possition,int playerId) {
-	int numbers[] = { 2, 4, 4, 2, -4, 4, -2, -4, -4, -2, 4, -4};
-    
-	int pom = possition;
-	int pomm = possition;
-    
-	while (pomm > 0)
-	{
-		pomm -= 10;
-		if (pomm >= 0)
-		{
-			pom++;
-			pomm++;
-		}
-        
-		
-	}
-    
-	pom += playerId * 10 ;
-    
-	int x = 4;
-	int y = 0;
-	bool change = true;
-	while (pom != 0) 
-	{
-		for (int i = 0; i < size(numbers); i++)
-		{
-			int actualNumber = numbers[i];
-            
-			while (actualNumber != 0)
-			{
-				if (change)
-				{
-					x += numbers[i] > 0 ? 1 : -1;
-				}
-				else
-				{
-					y += numbers[i] > 0 ? 1 : -1;
-				}
-				actualNumber = actualNumber > 0 ? actualNumber - 1 : actualNumber + 1;
-				pom--;
-				if (pom == 0)
-				{
-                    Coordinates coordinates = {x,y};
-                    return coordinates;
-				}
-			}
-			change = change ? false : true;
-		}
-        
-	}
-    
-    Coordinates coordinates = {x,y};
-	return coordinates;
-}
 
 Color getColorByTurnId(int id)
 {
@@ -540,6 +478,7 @@ int main(int argc, char *argv[])
 	while(1) {
 		sleep(0.3);
 		game = communicateWithServer(player);
+		numberOfPlayers = game.numberOfPlayers;
         
 		if(game.turnId == player.playerId && game.gameState == GameState::PLAYING)
 		{
@@ -602,9 +541,93 @@ int main(int argc, char *argv[])
             
 			PressEnterToContinue(1);
 
+			while (numberOfSix >= 0)
+			{
+				system("clear");
+				clearBoard();
+				draw(game);
+				
+				if (game.turnId == 0)
+					cout << "\033[1;31m" << "Red on the turn" << "\033[0m" << endl;
+				else if (game.turnId == 1)
+					cout << "\033[1;32m" << "Green on the turn." << "\033[0m" << endl;
+				else if (game.turnId == 2)
+					cout << "\033[1;33m" << "Yellow on the turn." << "\033[0m" << endl;
+				else if (game.turnId == 3)
+					cout << "\033[1;34m" << "Blue on the turn." << "\033[0m" << endl;
+				
+				int maxNumber = 0;
+				
+				if (numberOfSix > 0)
+					maxNumber = 6;
+				else
+					maxNumber = number;
+				
+				if (allInHouse(game.players[game.turnId]) && maxNumber != 6)
+				{
+					cout << "you cant move." << endl;
+					PressEnterToContinue(1);
+				}
+				else if (allInFinish(game.players[game.turnId]))
+				{
+					cout << "you cant move." << endl;
+					PressEnterToContinue(1);
+				}
+				else if ( numberOfplayable(game.players[game.turnId],maxNumber) == 0 )
+				{
+					cout << "you cant move." << endl;
+					PressEnterToContinue(1);
+				}
+				else 
+				{
+					bool iSplayable = false;
+					int figNumber = 0;
+					
+					while (!iSplayable)
+					{
+						cout << "Chose which figurines move 1,2,3 or 4 about " << maxNumber << endl;
+						cin >> figNumber;
+						figNumber--;
+						if (figNumber < 4 && playable(game.players[game.turnId], figNumber, maxNumber))
+							iSplayable = true;
+						else
+							cout << "you cant play with figure number " << figNumber + 1 << endl;
+					}
+					//ak je v domceku a hodim 6 tak ho pripravim na start
+					if (game.players[game.turnId].figurines[figNumber].figurineState == FigureState::IN_HOUSE && maxNumber == 6)
+					{
+						game.players[game.turnId].figurines[figNumber].position = 0;
+						game.players[game.turnId].figurines[figNumber].figurineState = FigureState::IN_GAME;
+					}
+					else if (game.players[game.turnId].figurines[figNumber].figurineState == FigureState::IN_GAME)
+					{
+						//overenie ci nejdem už do domceka
+						if (game.players[game.turnId].figurines[figNumber].position + maxNumber > 37)
+						{
+							//presunie do ciela
+							game.players[game.turnId].figurines[figNumber].figurineState = FigureState::IN_FINISH;
+							game.players[game.turnId].figurines[figNumber].position += maxNumber - 37;
+						} 
+						else 
+						{
+						game.players[game.turnId].figurines[figNumber].position += maxNumber;
+						}
+					}
+					else if (game.players[game.turnId].figurines[figNumber].figurineState == FigureState::IN_FINISH)
+					{   
+						game.players[game.turnId].figurines[figNumber].position += maxNumber;	
+					}
+					
+					system("clear");
+					clearBoard();
+					draw(game);
+				}
+				numberOfSix--;
+				player = game.players[game.turnId];
+			}
+
             player.playingHand = true;
 			game = communicateWithServer(player);
-			player.playingHand = false;
 		}
         
 		system("clear");
