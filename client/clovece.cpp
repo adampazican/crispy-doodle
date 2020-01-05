@@ -449,10 +449,6 @@ Game communicateWithServer(Player player)
     
 	write(sockfd, &player, sizeof(player)); 
 	int err = read(sockfd, &game, sizeof(game)); 
-	if(err)
-	{
-		printf("%i", errno);
-	}
     
 	close(sockfd);
 	return game;
@@ -468,13 +464,20 @@ int main(int argc, char *argv[])
 	Game game = communicateWithServer(player);
 	numberOfPlayers = game.numberOfPlayers;
     player = game.players[game.numberOfPlayers-1];
+	system("clear");
 	clearBoard();
 	draw(game);
     
 	while(1) {
 		sleep(0.3);
+		Game oldGame = game;
 		game = communicateWithServer(player);
 		numberOfPlayers = game.numberOfPlayers;
+
+		if(memcmp(&game, &oldGame, sizeof(Game)) == 0)
+		{
+			continue;
+		}
         
 		if(game.turnId == player.playerId && game.gameState == GameState::PLAYING)
 		{
@@ -631,161 +634,4 @@ int main(int argc, char *argv[])
 		clearBoard();
 		draw(game);
 	}
-    
-#if 0
-    
-    
-	int umiestnenie[4];
-	bool ukoncene[4];
-	int index = 0;
-    
-	for (int  i = 0; i < numberOfPlayers; i++)
-	{
-		umiestnenie[i] = -1;
-		ukoncene[i] = false;
-	}
-    
-	while (game.gameState != GameState::FINISHED)
-	{
-		
-        
-		while (numberOfSix >= 0)
-		{
-			system("clear");
-			clearBoard();
-			draw(game);
-            
-			if (game.turnId == 0)
-				cout << "\033[1;31m" << "Red on the turn" << "\033[0m" << endl;
-			else if (game.turnId == 1)
-				cout << "\033[1;32m" << "Green on the turn." << "\033[0m" << endl;
-			else if (game.turnId == 2)
-				cout << "\033[1;33m" << "Yellow on the turn." << "\033[0m" << endl;
-			else if (game.turnId == 3)
-				cout << "\033[1;34m" << "Blue on the turn." << "\033[0m" << endl;
-            
-			int maxNumber = 0;
-            
-			if (numberOfSix > 0)
-				maxNumber = 6;
-			else
-				maxNumber = number;
-            
-			if (allInHouse(game.players[game.turnId]) && maxNumber != 6)
-			{
-				cout << "you cant move." << endl;
-				PressEnterToContinue(1);
-			}
-			else if (allInFinish(game.players[game.turnId]))
-			{
-				cout << "you cant move." << endl;
-				PressEnterToContinue(1);
-			}
-			else if ( numberOfplayable(game.players[game.turnId],maxNumber) == 0 )
-			{
-				cout << "you cant move." << endl;
-				PressEnterToContinue(1);
-			}
-			else 
-			{
-				bool iSplayable = false;
-				int figNumber = 0;
-                
-				while (!iSplayable)
-				{
-					cout << "Chose which figurines move 1,2,3 or 4 about " << maxNumber << endl;
-					cin >> figNumber;
-					figNumber--;
-					if (figNumber < 4 && playable(game.players[game.turnId], figNumber, maxNumber))
-						iSplayable = true;
-					else
-						cout << "you cant play with figure number " << figNumber + 1 << endl;
-				}
-				//ak je v domceku a hodim 6 tak ho pripravim na start
-				if (game.players[game.turnId].figurines[figNumber].figurineState == FigureState::IN_HOUSE && maxNumber == 6)
-				{
-					game.players[game.turnId].figurines[figNumber].position = 0;
-					game.players[game.turnId].figurines[figNumber].figurineState = FigureState::IN_GAME;
-				}
-				else if (game.players[game.turnId].figurines[figNumber].figurineState == FigureState::IN_GAME)
-				{
-					//overenie ci nejdem už do domceka
-					if (game.players[game.turnId].figurines[figNumber].position + maxNumber > 37)
-					{
-						//presunie do ciela
-						game.players[game.turnId].figurines[figNumber].figurineState = FigureState::IN_FINISH;
-						game.players[game.turnId].figurines[figNumber].position += maxNumber - 37;
-					}
-					else
-					{
-						game.players[game.turnId].figurines[figNumber].position += maxNumber;
-                        
-						//overenie ci som nevykopol figurku  
-						for (int i = 0; i < numberOfPlayers; i++)
-						{
-							for (int j = 0; j < FIGURES_FOR_PLAYERS; j++)
-							{
-								if (game.turnId != i && game.players[i].figurines[j].figurineState == FigureState::IN_GAME)
-								{
-									Coordinates poss = getSquareInGame(game.players[game.turnId].figurines[figNumber].position, game.turnId);
-									Coordinates pom1 = getSquareInGame(game.players[i].figurines[j].position, i);
-                                    
-									if (poss.x == pom1.x && poss.y == pom1.y)
-									{
-										game.players[i].figurines[j].position = j + 1;
-										game.players[i].figurines[j].figurineState = FigureState::IN_HOUSE;
-									}
-								}
-							}
-						}
-					}
-				}
-				else if (game.players[game.turnId].figurines[figNumber].figurineState == FigureState::IN_FINISH)
-				{   
-					game.players[game.turnId].figurines[figNumber].position += maxNumber;	
-				}
-                
-				system("clear");
-				clearBoard();
-				draw(game);
-			}
-			numberOfSix--;
-		}
-        
-		int playerFinished = 0;
-        
-		for (int i = 0; i < numberOfPlayers; i++)
-		{
-			if (allInFinish(game.players[i]))
-				playerFinished++;
-		}
-        
-		if (playerFinished == numberOfPlayers)
-			game.gameState = GameState::FINISHED;
-        
-		if (allInFinish(game.players[game.turnId]))
-		{
-			if (!ukoncene[game.turnId])
-			{
-				umiestnenie[index] = game.turnId;
-				ukoncene[game.turnId] = true;
-				index++;
-			}
-		}
-        
-		PressEnterToContinue(3);
-		game.turnId++;
-	}
-    
-	system("clear");
-	clearBoard();
-	draw(game);
-    
-	for (int  i = 0; i < numberOfPlayers; i++)
-	{
-		cout << i + 1 << ". miesto: hrac cislo: " << umiestnenie[i] << endl;
-	}
-    
-#else
-#endif
 }
