@@ -128,21 +128,17 @@ void draw(Game game)
             
 			if (game.players[i].figurines[j].position != 0 && state == FigureState::IN_HOUSE)
 			{
-				switch (state)
-				{
-					case FigureState::IN_HOUSE:
-                    poss = getSquareInHouse(possition,i);
-                    break;
-					case FigureState::IN_GAME:
-                    poss = getSquareInGame(possition,i);
-                    break;
-					case FigureState::IN_FINISH:
-                    poss = getSquareInFinish(possition,i);
-                    break;
-				}
-				squares[poss.y][poss.x].character = '0' + (j + 1);
-				squares[poss.y][poss.x].color = color;
+				poss = getSquareInHouse(possition,i);
+                squares[poss.y][poss.x].character = '0' + (j + 1);
+                squares[poss.y][poss.x].color = color;
 			}
+
+			else if (state != FigureState::IN_HOUSE )
+            {
+                poss = state == FigureState::IN_GAME ? getSquareInGame(possition,i) : getSquareInFinish(possition,i);
+                squares[poss.y][poss.x].character = '0' + (j + 1);
+                squares[poss.y][poss.x].color = color;
+            }
 			
 		}		
 	}
@@ -626,8 +622,9 @@ int main(int argc, char *argv[])
 				player = game.players[game.turnId];
 			}
 
-            player.playingHand = true;
+			player.playingHand = true;
 			game = communicateWithServer(player);
+			player.playingHand = false;
 		}
         
 		system("clear");
