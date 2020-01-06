@@ -8,7 +8,14 @@
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
+#include <pthread.h>
 #include "definitions.h"
 #include "../common.h"
 
-void handle_request(i32 fileDescriptor, char* incomingBuffer, i32 incomingBufferLength, Game* game);
+struct Request{
+    i32 fileDescriptor;
+    Player player;
+    Game* game;
+};
+
+void* handle_request(Request* request);

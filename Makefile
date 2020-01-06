@@ -1,11 +1,11 @@
 BUILD_DIR=build
-COMMON_FLAGS=-std=c++11 -Wall
+COMMON_FLAGS=-std=c++11 -Wall -pthread
 DEBUG_FLAGS=-O0 -ggdb -DDEBUG_BUILD=1
 RELEASE_FLAGS=-Werror -O3
 DEPSS=server/server.h common.h
-UNITSS=server/linux_main.cpp server/server.cpp
+UNITSS=server/linux_main.cpp server/server.cpp common.cpp
 DEPSC=common.h
-UNITSC=client/clovece.cpp
+UNITSC=client/clovece.cpp common.cpp
 
 .DEFAULT_GOAL := all
 

@@ -1,7 +1,6 @@
 #include "server.h"
 
 global_variable Player zeroPlayer = {}; 
-#define FIGURES_FOR_PLAYERS 4
 
 void handle_turn(Game* game) 
 {
@@ -25,65 +24,56 @@ void handle_turn(Game* game)
     
 }
 
-bool allInFinish(Player player)
+void* handle_request(Request* request) 
 {
-    int number = 0;
-    
-    for (int i = 0; i < HOUSE_SIZE; i++)
+    if(memcmp(&request->player, &zeroPlayer, sizeof(Player)) == 0 && 
+       request->game->gameState == GameState::WAITING && 
+       request->game->numberOfPlayers < request->game->maxNumberOfPlayers)
     {
-        if (player.figurines[i].figurineState == FigureState::IN_FINISH)
-            number++;
-    }
-    
-    return number == 4 ? true : false;
-}
-
-void handle_request(i32 fileDescriptor, char* incomingBuffer, i32 incomingBufferLength, Game* game) 
-{
-    Player newPlayer = *(Player*) incomingBuffer;
-    
-    if(memcmp(&newPlayer, &zeroPlayer, sizeof(Player)) == 0 && game->gameState == GameState::WAITING && game->numberOfPlayers < game->maxNumberOfPlayers)
-    {
-        for(int i = 0; i < 4; i++) 
+        for(int i = 0; i < FIGURES_FOR_PLAYERS; i++) 
         {
-            game->players[game->numberOfPlayers].figurines[i].figurineState = FigureState::IN_HOUSE;
-            game->players[game->numberOfPlayers].figurines[i].position = i + 1;
-            game->players[game->numberOfPlayers].playerId = game->numberOfPlayers;
+            request->game->players[request->game->numberOfPlayers].figurines[i].figurineState = FigureState::IN_HOUSE;
+            request->game->players[request->game->numberOfPlayers].figurines[i].position = i + 1;
+            request->game->players[request->game->numberOfPlayers].playerId = request->game->numberOfPlayers;
         }
         
-        game->numberOfPlayers++;
+        request->game->numberOfPlayers++;
         
-        if(game->numberOfPlayers == game->maxNumberOfPlayers)
+        if(request->game->numberOfPlayers == request->game->maxNumberOfPlayers)
         {
-            game->gameState = GameState::PLAYING;
-            game->turnId = 0;
+            request->game->gameState = GameState::PLAYING;
+            request->game->turnId = 0;
         }
     }
-    else if(newPlayer.playerId == game->turnId && game->gameState == GameState::PLAYING && newPlayer.playingHand)
+    else if(request->player.playerId == request->game->turnId && 
+            request->game->gameState == GameState::PLAYING && 
+            request->player.playingHand)
     {
-        game->players[newPlayer.playerId] = newPlayer;
-        handle_turn(game);
-        game->players[newPlayer.playerId].playingHand = false;
+        request->game->players[request->player.playerId] = request->player;
+        handle_turn(request->game);
+        request->game->players[request->player.playerId].playingHand = false;
         
-        if(allInFinish(game->players[game->turnId]))
+        if(allInFinish(request->game->players[request->game->turnId]))
         {
-            game->gameState = GameState::FINISHED;
-            game->winnerId = game->turnId;
+            request->game->gameState = GameState::FINISHED;
+            request->game->winnerId = request->game->turnId;
         }
         else
         {
-            game->turnId++;
-            game->turnId %= game->maxNumberOfPlayers;
+            request->game->turnId++;
+            request->game->turnId %= request->game->maxNumberOfPlayers;
         }
     }
     
-    if(!send(fileDescriptor, game, sizeof(*game), 0)){
+    if(!send(request->fileDescriptor, request->game, sizeof(*request->game), 0)){
         printf("error writing data: %d", errno);
     }
     
-    if(close(fileDescriptor) < 0){
+    if(close(request->fileDescriptor) < 0){
         printf("error closing connection\n");
     }
     
-    free(incomingBuffer);
+    free(request);
+    
+    return 0;
 }

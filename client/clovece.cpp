@@ -12,10 +12,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define FIGURES_FOR_PLAYERS 4
-#define HOUSE_SIZE 4
-#define GAME_SIZE 32
-
 using namespace std;
 
 struct Square {
@@ -294,29 +290,14 @@ int numberOfplayable(Player player, int roll)
 	return number;
 }
 
-bool allInFinish(Player player)
-{
-	int number = 0;
-    
-	for (int i = 0; i < HOUSE_SIZE; i++)
-	{
-		if (player.figurines[i].figurineState == FigureState::IN_FINISH)
-			number++;
-	}
-    
-	return number == 4 ? true : false;
-}
-
 void PressEnterToContinue(int number)
 {
-    
-	int c;
-	if (number == 0)
-		cout << "Press ENTER to roll. " << endl;
+    if (number == 0)
+		cout << "Press ENTER to roll. ";
 	else if (number == 1)
-		cout << "Press ENTER to contunie in turn." << endl;
+		cout << "Press ENTER to contunie in turn.";
 	else 
-		cout << "Press ENTER to finsih turn." << endl;
+		cout << "Press ENTER to finsih turn.";
 
     cin.clear();
     cin.get();
@@ -406,17 +387,14 @@ void clearBoard() {
 	}
 }
 
-Game communicateWithServer(Player player) 
+Game communicateWithServer(Player player, char* hostname, char* port) 
 {
 	int sockfd;
 	sockaddr_in serv_addr;
 	hostent* server;
     
     Game game = {};
-	
-#define hostname "localhost"
-#define port "3000" //TODO: load as param
-    
+	    
 	//Použijeme funkciu gethostbyname na získanie informácii o počítači, ktorého hostname je v prvom argumente.
 	server = gethostbyname(hostname); 
 	if (server == NULL)
@@ -449,7 +427,7 @@ Game communicateWithServer(Player player)
 	}	
     
 	write(sockfd, &player, sizeof(player)); 
-	int err = read(sockfd, &game, sizeof(game)); 
+	read(sockfd, &game, sizeof(game)); 
     
 	close(sockfd);
 	return game;
@@ -457,12 +435,21 @@ Game communicateWithServer(Player player)
 
 int main(int argc, char *argv[])
 {
-	srand(time(NULL));
+	if(argc != 3)
+    {
+        cout << "Zly pocet parametrov" << endl;
+        return 1;
+    }
+    
+    char* hostname = argv[1];
+    char* port = argv[2];
+    
+    srand(time(NULL));
     
 	//pocet hracov v hre
 	
     Player player = {};
-	Game game = communicateWithServer(player);
+	Game game = communicateWithServer(player, hostname, port);
 	numberOfPlayers = game.numberOfPlayers;
     player = game.players[game.numberOfPlayers-1];
 	system("clear");
@@ -472,7 +459,7 @@ int main(int argc, char *argv[])
 	while(1) {
 		sleep(0.3);
 		Game oldGame = game;
-		game = communicateWithServer(player);
+		game = communicateWithServer(player, hostname, port);
 		numberOfPlayers = game.numberOfPlayers;
         
         if(game.gameState == GameState::FINISHED)
@@ -646,7 +633,7 @@ int main(int argc, char *argv[])
             player.figurines[3].position = 4;
             player.figurines[3].figurineState = FigureState::IN_FINISH;
 #endif            
-			game = communicateWithServer(player);
+			game = communicateWithServer(player, hostname, port);
 			player.playingHand = false;
 		}
         

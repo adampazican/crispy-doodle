@@ -7,28 +7,19 @@
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
+#include <pthread.h>
 
 #include "definitions.h"
 #include "server.h"
 
-
-global_variable bool isRunning = true;
-#if DEBUG_BUILD
-void sig_handler(i32 sigNo)
-{
-    if(sigNo == SIGINT) {
-        if (!isRunning) abort();
-        isRunning = false;
+int main(int argc, char *argv[]) {
+    if(argc != 2)
+    {
+        printf("Zly pocet parametrov\n");
+        return 1;
     }
-}
-#endif
-
-int main() {
-#if DEBUG_BUILD
-    if(signal(SIGINT, sig_handler) == SIG_ERR){
-        printf("cant catch signal ctrl+c");
-    }
-#endif
+    
+    char* port = argv[1];
     
     printf("server initialization!!\n");
     int serverFd = socket(AF_INET, SOCK_STREAM, 0);
@@ -39,7 +30,7 @@ int main() {
     
     sockaddr_in addr = {};
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(3000);
+    addr.sin_port = htons(atoi(port));
     
     int opt = 1;
     if(!setsockopt(serverFd, IPPROTO_TCP, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))){
@@ -61,12 +52,12 @@ int main() {
     {
         printf("error3%d\n", errno);
     }
-
+    
     Game game = {};
     game.maxNumberOfPlayers = 2;
     game.numberOfPlayers = 0;
-
-    while(isRunning) {
+    
+    while(1) {
         sockaddr_in clientAddr = {};
         socklen_t clientAddrLen = 0;
         i32 fd = accept(serverFd, (sockaddr*) &clientAddr, &clientAddrLen);
@@ -76,19 +67,21 @@ int main() {
             printf("error4\n");
         }
         else if (fd > 0){
-            char* incomingBuffer = (char*) malloc(1000);
-            i32 incomingBufferLength = 1000;
+            Request* request = (Request*) malloc(sizeof(Request));
             
-            if(!read(fd, incomingBuffer, incomingBufferLength)){
+            if(!read(fd, &request->player, sizeof(Player))){
                 printf("error reading data: %d", errno);
                 close(fd);
                 continue;
             }
             
+            request->fileDescriptor = fd;
+            request->game = &game;
+            
             //TODO: create new thread for handle_request 
             //pass buffers to handle_request but it must clean after itself
             
-            handle_request(fd, incomingBuffer, incomingBufferLength, &game);
+            handle_request(request);
         }
     }
     
