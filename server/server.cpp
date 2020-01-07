@@ -24,10 +24,14 @@ void handle_turn(Game* game)
     
 }
 
-void* handle_request(Request* request) 
+void* handle_request(void* data) 
 {
-    if(memcmp(&request->player, &zeroPlayer, sizeof(Player)) == 0 && 
-       request->game->gameState == GameState::WAITING && 
+    Request* request = (Request*) data;
+    
+    pthread_mutex_lock(request->mutex);
+    
+    if(request->game->gameState == GameState::WAITING && 
+       memcmp(&request->player, &zeroPlayer, sizeof(Player)) == 0 && 
        request->game->numberOfPlayers < request->game->maxNumberOfPlayers)
     {
         for(int i = 0; i < FIGURES_FOR_PLAYERS; i++) 
@@ -45,29 +49,42 @@ void* handle_request(Request* request)
             request->game->turnId = 0;
         }
     }
-    else if(request->player.playerId == request->game->turnId && 
-            request->game->gameState == GameState::PLAYING && 
+    
+    Game newGame = *request->game;
+    pthread_mutex_unlock(request->mutex);
+    
+    if(request->player.playerId == newGame.turnId && 
+            newGame.gameState == GameState::PLAYING && 
             request->player.playingHand)
-    {
-        request->game->players[request->player.playerId] = request->player;
-        handle_turn(request->game);
-        request->game->players[request->player.playerId].playingHand = false;
+    {        
         
-        if(allInFinish(request->game->players[request->game->turnId]))
+        newGame.players[request->player.playerId] = request->player;
+        handle_turn(&newGame);
+        newGame.players[request->player.playerId].playingHand = false;
+        
+        if(allInFinish(newGame.players[newGame.turnId]))
         {
-            request->game->gameState = GameState::FINISHED;
-            request->game->winnerId = request->game->turnId;
+            newGame.gameState = GameState::FINISHED;
+            newGame.winnerId = newGame.turnId;
         }
         else
         {
-            request->game->turnId++;
-            request->game->turnId %= request->game->maxNumberOfPlayers;
+            newGame.turnId++;
+            newGame.turnId %= newGame.maxNumberOfPlayers;
         }
+        
+        pthread_mutex_lock(request->mutex);
+        *request->game = newGame;
+        pthread_mutex_unlock(request->mutex);
     }
+    
+    pthread_mutex_lock(request->mutex);
     
     if(!send(request->fileDescriptor, request->game, sizeof(*request->game), 0)){
         printf("error writing data: %d", errno);
     }
+    
+    pthread_mutex_unlock(request->mutex);
     
     if(close(request->fileDescriptor) < 0){
         printf("error closing connection\n");

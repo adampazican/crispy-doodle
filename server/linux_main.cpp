@@ -57,10 +57,18 @@ int main(int argc, char *argv[]) {
     game.maxNumberOfPlayers = 2;
     game.numberOfPlayers = 0;
     
+    pthread_mutex_t mutex = {};
+    pthread_mutex_init(&mutex, 0);
+    
     while(1) {
         sockaddr_in clientAddr = {};
         socklen_t clientAddrLen = 0;
         i32 fd = accept(serverFd, (sockaddr*) &clientAddr, &clientAddrLen);
+        if(fd == -1)
+        {
+            perror("accept failed");
+            continue;
+        }
         assert(clientAddrLen == sizeof(clientAddr));
         
         if(!fd) {
@@ -68,6 +76,10 @@ int main(int argc, char *argv[]) {
         }
         else if (fd > 0){
             Request* request = (Request*) malloc(sizeof(Request));
+            pthread_t thread = {};
+            pthread_attr_t thread_attr = {};
+            
+            pthread_attr_init(&thread_attr); pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
             
             if(!read(fd, &request->player, sizeof(Player))){
                 printf("error reading data: %d", errno);
@@ -77,14 +89,19 @@ int main(int argc, char *argv[]) {
             
             request->fileDescriptor = fd;
             request->game = &game;
+            request->mutex = &mutex;
             
-            //TODO: create new thread for handle_request 
-            //pass buffers to handle_request but it must clean after itself
+            if(pthread_create(&thread, &thread_attr, &handle_request, request))
+            {
+                perror("thread couldnt be created because of reason");
+                assert(0);
+            }
             
-            handle_request(request);
+            pthread_attr_destroy(&thread_attr);
         }
     }
     
     close(serverFd);
+    pthread_mutex_destroy(&mutex);
     return 0;
 }

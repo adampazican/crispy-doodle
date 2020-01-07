@@ -128,7 +128,7 @@ void draw(Game game)
                 squares[poss.y][poss.x].character = '0' + (j + 1);
                 squares[poss.y][poss.x].color = color;
 			}
-
+            
 			else if (state != FigureState::IN_HOUSE )
             {
                 poss = state == FigureState::IN_GAME ? getSquareInGame(possition,i) : getSquareInFinish(possition,i);
@@ -138,7 +138,7 @@ void draw(Game game)
 			
 		}		
 	}
-
+    
 	cout << "turnId: " <<  game.turnId << endl;
 	
 	for (int i = 0; i < 11; i++)
@@ -298,7 +298,7 @@ void PressEnterToContinue(int number)
 		cout << "Press ENTER to contunie in turn.";
 	else 
 		cout << "Press ENTER to finsih turn.";
-
+    
     cin.clear();
     cin.get();
 }
@@ -394,7 +394,7 @@ Game communicateWithServer(Player player, char* hostname, char* port)
 	hostent* server;
     
     Game game = {};
-	    
+    
 	//Použijeme funkciu gethostbyname na získanie informácii o počítači, ktorého hostname je v prvom argumente.
 	server = gethostbyname(hostname); 
 	if (server == NULL)
@@ -455,7 +455,7 @@ int main(int argc, char *argv[])
 	system("clear");
 	clearBoard();
 	draw(game);
-        
+    
 	while(1) {
 		sleep(0.3);
 		Game oldGame = game;
@@ -536,7 +536,7 @@ int main(int argc, char *argv[])
 			}
             
 			PressEnterToContinue(1);
-
+            
 			while (numberOfSix >= 0)
 			{
 				system("clear");
@@ -606,7 +606,7 @@ int main(int argc, char *argv[])
 						} 
 						else 
 						{
-						game.players[game.turnId].figurines[figNumber].position += maxNumber;
+                            game.players[game.turnId].figurines[figNumber].position += maxNumber;
 						}
 					}
 					else if (game.players[game.turnId].figurines[figNumber].figurineState == FigureState::IN_FINISH)
@@ -621,7 +621,7 @@ int main(int argc, char *argv[])
 				numberOfSix--;
 				player = game.players[game.turnId];
 			}
-
+            
 			player.playingHand = true;
 #if 0
             player.figurines[0].position = 1;

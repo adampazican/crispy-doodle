@@ -16,6 +16,7 @@ struct Request{
     i32 fileDescriptor;
     Player player;
     Game* game;
+    pthread_mutex_t* mutex;
 };
 
-void* handle_request(Request* request);
+void* handle_request(void* data);
