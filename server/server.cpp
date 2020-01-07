@@ -50,7 +50,7 @@ void* handle_request(void* data)
         }
     }
     
-    Game newGame = *request->game;
+    Game newGame = *(Game*)request->game;
     pthread_mutex_unlock(request->mutex);
     
     if(request->player.playerId == newGame.turnId && 
@@ -74,13 +74,13 @@ void* handle_request(void* data)
         }
         
         pthread_mutex_lock(request->mutex);
-        *request->game = newGame;
+        *(Game*)request->game = newGame;
         pthread_mutex_unlock(request->mutex);
     }
     
     pthread_mutex_lock(request->mutex);
     
-    if(!send(request->fileDescriptor, request->game, sizeof(*request->game), 0)){
+    if(!send(request->fileDescriptor, (Game*) request->game, sizeof(*request->game), 0)){
         printf("error writing data: %d", errno);
     }
     
