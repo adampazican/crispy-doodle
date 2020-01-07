@@ -77,15 +77,11 @@ void* handle_request(void* data)
         *(Game*)request->game = newGame;
         pthread_mutex_unlock(request->mutex);
     }
-    
-    pthread_mutex_lock(request->mutex);
-    
-    if(!send(request->fileDescriptor, (Game*) request->game, sizeof(*request->game), 0)){
+        
+    if(!send(request->fileDescriptor, &newGame, sizeof(newGame), 0)){
         printf("error writing data: %d", errno);
     }
-    
-    pthread_mutex_unlock(request->mutex);
-    
+        
     if(close(request->fileDescriptor) < 0){
         printf("error closing connection\n");
     }
