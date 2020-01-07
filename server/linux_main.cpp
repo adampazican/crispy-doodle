@@ -13,13 +13,14 @@
 #include "server.h"
 
 int main(int argc, char *argv[]) {
-    if(argc != 2)
+    if(argc != 3)
     {
         printf("Zly pocet parametrov\n");
         return 1;
     }
     
     char* port = argv[1];
+    char* pocetHracov = argv[2];
     
     printf("server initialization!!\n");
     int serverFd = socket(AF_INET, SOCK_STREAM, 0);
@@ -54,7 +55,7 @@ int main(int argc, char *argv[]) {
     }
     
     Game game = {};
-    game.maxNumberOfPlayers = 2;
+    game.maxNumberOfPlayers = atoi(pocetHracov);
     game.numberOfPlayers = 0;
     
     pthread_mutex_t mutex = {};
