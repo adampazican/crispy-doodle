@@ -17,20 +17,20 @@ void handle_turn(Game* game)
                         if(game->players[game->turnId].figurines[k].figurineState == FigureState::IN_GAME)
                         {
                             
-                        Coordinates poss = getSquareInGame(game->players[game->turnId].figurines[k].position, game->turnId);
-                        Coordinates pom1 = getSquareInGame(game->players[i].figurines[j].position, i);
-                        
-                        if (poss.x == pom1.x && poss.y == pom1.y)
-                        {
-                            game->players[i].figurines[j].position = j + 1;
-                            game->players[i].figurines[j].figurineState = FigureState::IN_HOUSE;
+                            Coordinates poss = getSquareInGame(game->players[game->turnId].figurines[k].position, game->turnId);
+                            Coordinates pom1 = getSquareInGame(game->players[i].figurines[j].position, i);
+                            
+                            if (poss.x == pom1.x && poss.y == pom1.y)
+                            {
+                                game->players[i].figurines[j].position = j + 1;
+                                game->players[i].figurines[j].figurineState = FigureState::IN_HOUSE;
+                            }
                         }
                     }               
                 }
             }
         }
-    }
-    
+    }    
 }
 
 void* handle_request(void* data) 
