@@ -399,8 +399,8 @@ Game communicateWithServer(Player player, char* hostname, char* port)
 	server = gethostbyname(hostname); 
 	if (server == NULL)
 	{
-		//fprintf(stderr, "Error, no such host\n");
-		return game;
+		perror("Error, no such host\n");
+		exit(-1);
 	}
     
 	//Vynulujeme a zinicializujeme adresu, na ktorú sa budeme pripájať.
@@ -418,12 +418,14 @@ Game communicateWithServer(Player player, char* hostname, char* port)
 	if (sockfd < 0)
 	{
 		perror("Error creating socket");
+        exit(-1);
 	}
     
 	//Pripojíme sa na zadanú sieťovú adresu.
 	if(connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)  
 	{
         perror("Error connecting to socket");
+        exit(-1);
 	}	
     
 	write(sockfd, &player, sizeof(player)); 
