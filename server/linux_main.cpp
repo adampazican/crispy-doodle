@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     if((bind(serverFd, (sockaddr*) &addr, sizeof(addr))))
     {
         printf("%d port unavailable, attempting port 3001\n", ntohs(addr.sin_port));
-        addr.sin_port = htons(3001);
+        addr.sin_port = htons(atoi(port)+1);
         if((bind(serverFd, (sockaddr*) &addr, sizeof(addr)))){
             printf("error initializing server %d\n", errno);
             return 0;
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     {
         game.maxNumberOfPlayers = atoi(pocetHracov);
     }
-
+    
     pthread_mutex_t mutex = {};
     pthread_mutex_init(&mutex, 0);
     
