@@ -55,9 +55,21 @@ int main(int argc, char *argv[]) {
     }
     
     Game game = {};
-    game.maxNumberOfPlayers = atoi(pocetHracov);
     game.numberOfPlayers = 0;
     
+    if (atoi(pocetHracov) > 4 )
+    {
+        game.maxNumberOfPlayers = 4;
+        printf("Number of players was set to 4.\n");
+    } else if (atoi(pocetHracov) < 2)
+    {
+        game.maxNumberOfPlayers = 2;
+        printf("Number of players was set to 2.\n");
+    } else 
+    {
+        game.maxNumberOfPlayers = atoi(pocetHracov);
+    }
+
     pthread_mutex_t mutex = {};
     pthread_mutex_init(&mutex, 0);
     
