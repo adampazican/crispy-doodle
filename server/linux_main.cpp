@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     
     if((bind(serverFd, (sockaddr*) &addr, sizeof(addr))))
     {
-        printf("%d port unavailable, attempting port 3001\n", ntohs(addr.sin_port));
+        printf("%d port unavailable, attempting port %d\n", atoi(port), atoi(port)+1);
         addr.sin_port = htons(atoi(port)+1);
         if((bind(serverFd, (sockaddr*) &addr, sizeof(addr)))){
             printf("error initializing server %d\n", errno);
