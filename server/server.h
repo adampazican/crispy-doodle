@@ -9,7 +9,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <pthread.h>
-#include "definitions.h"
 #include "../common.h"
 
 struct Request{

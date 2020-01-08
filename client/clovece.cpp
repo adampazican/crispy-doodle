@@ -19,8 +19,8 @@ struct Square {
 	Color color;
 };
 
-Square squares[11][11];
-int numberOfPlayers;
+global_variable Square squares[11][11];
+global_variable int numberOfPlayers;
 
 Coordinates getSquareInFinish(int possition, int playerId)
 {

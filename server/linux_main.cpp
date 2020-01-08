@@ -9,7 +9,6 @@
 #include <signal.h>
 #include <pthread.h>
 
-#include "definitions.h"
 #include "server.h"
 
 int main(int argc, char *argv[]) {
@@ -107,7 +106,6 @@ int main(int argc, char *argv[]) {
             if(pthread_create(&thread, &thread_attr, &handle_request, request))
             {
                 perror("thread couldnt be created because of reason");
-                assert(0);
             }
             
             pthread_attr_destroy(&thread_attr);
