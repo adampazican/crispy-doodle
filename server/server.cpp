@@ -14,6 +14,9 @@ void handle_turn(Game* game)
                 {
                     for (int k = 0; k < FIGURES_FOR_PLAYERS; k++)
                     {
+                        if(game->players[game->turnId].figurines[k].figurineState == FigureState::IN_GAME)
+                        {
+                            
                         Coordinates poss = getSquareInGame(game->players[game->turnId].figurines[k].position, game->turnId);
                         Coordinates pom1 = getSquareInGame(game->players[i].figurines[j].position, i);
                         
