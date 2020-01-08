@@ -113,8 +113,9 @@ Color getColorByTurnId(int id)
 
 void draw(Game game) 
 {
-	for (int  i = 0; i < numberOfPlayers; i++)
+	for (int  i = 0; i < numberOfPlayers + 1; i++)
 	{
+		i = i == 4 ? game.turnId : i;
 		for (int j = 0; j < FIGURES_FOR_PLAYERS; j++)
 		{
 			FigureState state = game.players[i].figurines[j].figurineState;
@@ -138,7 +139,7 @@ void draw(Game game)
 			
 		}		
 	}
-    
+   
 	cout << "turnId: " <<  game.turnId << endl;
 	
 	for (int i = 0; i < 11; i++)
