@@ -6,17 +6,23 @@ void handle_turn(Game* game)
 {
     for (int i = 0; i < game->maxNumberOfPlayers; i++)
     {
-        for (int j = 0; j < FIGURES_FOR_PLAYERS; j++)
+        if (game->turnId != i)
         {
-            if (game->turnId != i && game->players[i].figurines[j].figurineState == FigureState::IN_GAME)
+            for (int j = 0; j < FIGURES_FOR_PLAYERS; j++)
             {
-                Coordinates poss = getSquareInGame(game->players[game->turnId].figurines[j].position, game->turnId);
-                Coordinates pom1 = getSquareInGame(game->players[i].figurines[j].position, i);
-                
-                if (poss.x == pom1.x && poss.y == pom1.y)
+                if(game->players[i].figurines[j].figurineState == FigureState::IN_GAME)
                 {
-                    game->players[i].figurines[j].position = j + 1;
-                    game->players[i].figurines[j].figurineState = FigureState::IN_HOUSE;
+                    for (int k = 0; k < FIGURES_FOR_PLAYERS; k++)
+                    {
+                        Coordinates poss = getSquareInGame(game->players[game->turnId].figurines[k].position, game->turnId);
+                        Coordinates pom1 = getSquareInGame(game->players[i].figurines[j].position, i);
+                        
+                        if (poss.x == pom1.x && poss.y == pom1.y)
+                        {
+                            game->players[i].figurines[j].position = j + 1;
+                            game->players[i].figurines[j].figurineState = FigureState::IN_HOUSE;
+                        }
+                    }               
                 }
             }
         }
